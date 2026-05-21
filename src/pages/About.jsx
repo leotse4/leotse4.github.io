@@ -3,11 +3,11 @@ import { motion } from 'framer-motion';
 const About = () => {
   return (
     <div className="container animate-fade-in">
-      <div style={{ maxWidth: '800px', padding: '4rem 0' }}>
+      <div style={{ maxWidth: '800px', padding: 'var(--section-padding)' }}>
         <motion.h1 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          style={{ fontSize: '3.5rem', marginBottom: '2rem' }}
+          style={{ marginBottom: '2rem' }}
         >
           My <span className="text-accent">Story</span>
         </motion.h1>

@@ -3,17 +3,17 @@ import { Briefcase, Shield, Download, GraduationCap } from 'lucide-react';
 
 const Career = () => {
   return (
-    <div className="container animate-fade-in" style={{ paddingTop: '4rem', paddingBottom: '4rem' }}>
-      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4rem', gap: '2rem' }}>
-        <h1 style={{ fontSize: '3.5rem' }}>Experience <span className="text-accent">& Skills</span></h1>
+    <div className="container animate-fade-in" style={{ padding: 'var(--section-padding)' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3rem', gap: '1.5rem' }}>
+        <h1 style={{ marginBottom: '0.5rem' }}>Experience <span className="text-accent">& Skills</span></h1>
         <button className="btn btn-primary"><Download size={20} /> Resume PDF</button>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(280px, 320px)', gap: '4rem' }}>
-        <div className="timeline" style={{ position: 'relative', borderLeft: '2px solid var(--border)', paddingLeft: '2rem' }}>
+      <div className="career-grid">
+        <div className="timeline">
           
-          <motion.div initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} style={{ marginBottom: '4rem', position: 'relative' }}>
-            <div style={{ position: 'absolute', left: 'calc(-2rem - 1.5rem + 1px)', top: 0, width: '3rem', height: '3rem', background: 'var(--accent)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%' }}>
+          <motion.div initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="timeline-item">
+            <div className="timeline-badge" style={{ backgroundColor: 'var(--accent)', color: 'white' }}>
               <Briefcase size={20} />
             </div>
             <h2 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>District Operations Manager</h2>
@@ -25,8 +25,8 @@ const Career = () => {
             </ul>
           </motion.div>
 
-          <motion.div initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} style={{ position: 'relative', marginBottom: '4rem' }}>
-            <div style={{ position: 'absolute', left: 'calc(-2rem - 1.5rem + 1px)', top: 0, width: '3rem', height: '3rem', background: 'var(--primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%' }}>
+          <motion.div initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="timeline-item">
+            <div className="timeline-badge" style={{ backgroundColor: 'var(--primary)', color: 'white' }}>
               <Shield size={20} />
             </div>
             <h2 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>Internal IT Audit Senior</h2>
@@ -39,8 +39,8 @@ const Career = () => {
             </ul>
           </motion.div>
 
-          <motion.div initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} style={{ position: 'relative', marginBottom: '4rem' }}>
-            <div style={{ position: 'absolute', left: '-2.75rem', top: 0, background: 'var(--primary)', color: 'white', padding: '0.5rem', borderRadius: '50%' }}>
+          <motion.div initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="timeline-item">
+            <div className="timeline-badge" style={{ backgroundColor: 'var(--primary)', color: 'white' }}>
               <Shield size={20} />
             </div>
             <h2 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>IT Audit Staff</h2>
@@ -52,8 +52,8 @@ const Career = () => {
             </ul>
           </motion.div>
 
-          <motion.div initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} style={{ position: 'relative' }}>
-            <div style={{ position: 'absolute', left: 'calc(-2rem - 1.5rem + 1px)', top: 0, width: '3rem', height: '3rem', background: 'var(--accent)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%' }}>
+          <motion.div initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="timeline-item">
+            <div className="timeline-badge" style={{ backgroundColor: 'var(--accent)', color: 'white' }}>
               <GraduationCap size={20} />
             </div>
             <h2 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>Santa Clara University</h2>
@@ -67,7 +67,7 @@ const Career = () => {
         </div>
 
         <div className="skills-matrix" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-          <div className="glass" style={{ padding: '2rem', borderRadius: 'var(--radius)' }}>
+          <div className="glass" style={{ padding: '1.5rem', borderRadius: 'var(--radius)' }}>
             <h3 style={{ marginBottom: '1.5rem' }}>Business Acumen</h3>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
               {['Project Management', 'B2B Sales', 'Operations', 'Compliance', 'ISO 27001', 'SOX'].map(s => (
@@ -75,7 +75,7 @@ const Career = () => {
               ))}
             </div>
           </div>
-          <div className="glass" style={{ padding: '2rem', borderRadius: 'var(--radius)' }}>
+          <div className="glass" style={{ padding: '1.5rem', borderRadius: 'var(--radius)' }}>
             <h3 style={{ marginBottom: '1.5rem' }}>Technical Skills</h3>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
               {['Python', 'SQL', 'Risk Assessment', 'JIRA', 'Hubspot', 'Data Analysis'].map(s => (
