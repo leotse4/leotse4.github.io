@@ -24,8 +24,22 @@ const Career = () => {
             <div className="timeline-badge" style={{ backgroundColor: 'var(--accent)', color: 'white' }}>
               <Briefcase size={20} />
             </div>
+            <h2 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>Associate Account Executive</h2>
+            <h3 className="text-muted" style={{ fontWeight: 500, marginBottom: '1rem' }}>DOSS &bull; 07/2026 - Current</h3>
+            <ul style={{ paddingLeft: '1.2rem', color: 'var(--muted)', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <li>Prospect fast-growing consumer brands by phone, email, and LinkedIn, leading the team in outbound activity.</li>
+              <li>Built AI-assisted prospecting workflows and Salesforce reports that cut weekly manual research and administrative work from 10 hours to 1 hour.</li>
+              <li>Created an SDR playbook for a go-to-market software migration, documenting workflows and flagging adoption risks.</li>
+              <li>Qualified inbound ERP leads using BANTR, with a five-minute outreach target during business hours, and handled 50% more inbound leads than peers.</li>
+            </ul>
+          </motion.div>
+
+          <motion.div initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="timeline-item">
+            <div className="timeline-badge" style={{ backgroundColor: 'var(--accent)', color: 'white' }}>
+              <Briefcase size={20} />
+            </div>
             <h2 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>District Operations Manager</h2>
-            <h3 className="text-muted" style={{ fontWeight: 500, marginBottom: '1rem' }}>Fish Window Cleaning &bull; 11/2025 - Current</h3>
+            <h3 className="text-muted" style={{ fontWeight: 500, marginBottom: '1rem' }}>Fish Window Cleaning &bull; 11/2025 - 07/2026</h3>
             <ul style={{ paddingLeft: '1.2rem', color: 'var(--muted)', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               <li>Manage the customer journey of residential and commercial businesses via HubSpot, achieving a 99%+ customer retention rate across 200+ accounts by leveraging HubSpot to automate engagement sequences and personalize the customer journey.</li>
               <li>Organize routes for cleaning schedules, balancing client requests with cleaner resource utilization.</li>
