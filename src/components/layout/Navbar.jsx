@@ -11,7 +11,7 @@ const Navbar = () => {
     { path: '/about', label: 'Story' },
     { path: '/career', label: 'Career' },
     { path: '/interests', label: 'Interests' },
-    { path: '/recipes', label: 'Recipe tool' }
+    { path: '/recipes', label: 'Meal planner' }
   ];
 
   // Close mobile menu on route change
