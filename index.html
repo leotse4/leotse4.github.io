@@ -8,6 +8,8 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>try { const path = sessionStorage.getItem('leo-pages-path'); if (path && path.startsWith('/') && !path.startsWith('//')) { sessionStorage.removeItem('leo-pages-path'); history.replaceState(null, '', path); } } catch {}</script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
+

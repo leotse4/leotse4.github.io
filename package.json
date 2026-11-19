@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "node --test tests/*.test.js",
+    "start:importer": "node server/index.js"
   },
   "dependencies": {
     "framer-motion": "^12.38.0",
@@ -28,3 +30,4 @@
     "vite": "^8.0.1"
   }
 }
+
