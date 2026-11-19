@@ -28,7 +28,7 @@ export function validatePlanner(s) {
   if (!Object.values(s.storePreferences).every(str)) return false;
   for (const [key, week] of Object.entries(s.weeks)) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(key) || !record(week) || !record(week.meals) || !record(week.items) || !Array.isArray(week.extras)) return false;
-    if (!Object.entries(week.meals).every(([slot, m]) => /^[0-6]-(breakfast|lunch|dinner)$/.test(slot) && record(m) && str(m.recipeId) && validServings(m.servings) && s.recipes.some(r => r.id === m.recipeId && validServings(r.originalServings)))) return false;
+    if (!Object.entries(week.meals).every(([slot, m]) => /^[0-6]-(breakfast|lunch|dinner)$/.test(slot) && record(m) && validServings(m.servings) && (m.kind === 'leftovers' ? slot.endsWith('-lunch') && validLeftoverSource(s, key, slot, m.sourceWeek, m.sourceSlot) : (m.kind === undefined || m.kind === 'recipe') && str(m.recipeId) && s.recipes.some(r => r.id === m.recipeId && validServings(r.originalServings))))) return false;
     if (!week.extras.every(i => record(i) && str(i.id) && str(i.name) && str(i.amount) && str(i.unit) && str(i.storeId))) return false;
     if (!Object.values(week.items).every(i => record(i) && (i.override === undefined || i.override === null || str(i.override)) && (i.checked === undefined || i.checked === null || str(i.checked)) && (i.owned === undefined || i.owned === null || str(i.owned)))) return false;
   }
@@ -49,8 +49,45 @@ export function planMeal(state, key, slot, recipeId, servings = state.defaultSer
   const week = state.weeks[key] || emptyWeek();
   return { ...state, weeks: { ...state.weeks, [key]: { ...week, meals: { ...week.meals, [slot]: { recipeId, servings: Number(servings) } } } } };
 }
+export function validLeftoverSource(state, key, slot, sourceWeek, sourceSlot) {
+  if (!str(sourceWeek) || !/^\d{4}-\d{2}-\d{2}$/.test(sourceWeek) || !str(sourceSlot) || !/^[0-6]-dinner$/.test(sourceSlot) || !/^[0-6]-lunch$/.test(slot)) return false;
+  const source = state.weeks[sourceWeek]?.meals?.[sourceSlot];
+  if (!source || source.kind === 'leftovers' || !validServings(source.servings)) return false;
+  const recipe = state.recipes.find(r => r.id === source.recipeId);
+  return !!recipe && validServings(recipe.originalServings) && addDays(sourceWeek, Number(sourceSlot[0])) < addDays(key, Number(slot[0]));
+}
+export function planLeftovers(state, key, slot, sourceWeek, sourceSlot, servings = state.defaultServings) {
+  if (!validServings(servings) || !validLeftoverSource(state, key, slot, sourceWeek, sourceSlot)) throw new Error('Choose an earlier planned dinner and a valid lunch serving count.');
+  const week = state.weeks[key] || emptyWeek();
+  return { ...state, weeks: { ...state.weeks, [key]: { ...week, meals: { ...week.meals, [slot]: { kind: 'leftovers', sourceWeek, sourceSlot, servings: Number(servings) } } } } };
+}
+export function mealRecipe(state, key, slot) {
+  const meal = state.weeks[key]?.meals[slot];
+  const source = meal?.kind === 'leftovers' ? state.weeks[meal.sourceWeek]?.meals[meal.sourceSlot] : meal;
+  return source && state.recipes.find(r => r.id === source.recipeId);
+}
+export function linkedLunches(state, key, slot) {
+  return Object.entries(state.weeks).flatMap(([weekKey, week]) => Object.entries(week.meals).filter(([, m]) => m.kind === 'leftovers' && m.sourceWeek === key && m.sourceSlot === slot).map(([lunchSlot, m]) => ({ weekKey, slot: lunchSlot, servings: Number(m.servings) })));
+}
+export function cookingServings(state, key, slot) {
+  const meal = state.weeks[key]?.meals[slot];
+  return Number(meal?.servings || 0) + linkedLunches(state, key, slot).reduce((sum, lunch) => sum + lunch.servings, 0);
+}
+export function leftoverChoices(state, key, slot) {
+  return [addDays(key, -7), key].flatMap(sourceWeek => Object.keys(state.weeks[sourceWeek]?.meals || {}).filter(sourceSlot => validLeftoverSource(state, key, slot, sourceWeek, sourceSlot)).map(sourceSlot => ({ sourceWeek, sourceSlot, recipe: mealRecipe(state, sourceWeek, sourceSlot), date: addDays(sourceWeek, Number(sourceSlot[0])) }))).sort((a, b) => b.date.localeCompare(a.date));
+}
+function pruneBrokenLeftovers(state) {
+  return { ...state, weeks: Object.fromEntries(Object.entries(state.weeks).map(([key, week]) => [key, { ...week, meals: Object.fromEntries(Object.entries(week.meals).filter(([slot, meal]) => meal.kind !== 'leftovers' || validLeftoverSource(state, key, slot, meal.sourceWeek, meal.sourceSlot))) }])) };
+}
+export function removeMeal(state, key, slot) {
+  const week = state.weeks[key] || emptyWeek(), meals = { ...week.meals };
+  delete meals[slot];
+  return pruneBrokenLeftovers({ ...state, weeks: { ...state.weeks, [key]: { ...week, meals } } });
+}
 export function copyWeek(state, from, to) {
-  return { ...state, weeks: { ...state.weeks, [to]: { ...emptyWeek(), meals: structuredClone(state.weeks[from]?.meals || {}) } } };
+  const delta = Math.round((Date.parse(to + 'T12:00:00Z') - Date.parse(from + 'T12:00:00Z')) / 86400000);
+  const meals = Object.fromEntries(Object.entries(state.weeks[from]?.meals || {}).map(([slot, meal]) => [slot, meal.kind === 'leftovers' ? { ...meal, sourceWeek: addDays(meal.sourceWeek, delta) } : { ...meal }]));
+  return pruneBrokenLeftovers({ ...state, weeks: { ...state.weeks, [to]: { ...emptyWeek(), meals } } });
 }
 export function groceryList(state, key) {
   const week = state.weeks[key] || emptyWeek(), groups = new Map();
@@ -66,10 +103,12 @@ export function groceryList(state, key) {
     item.sources.push(contribution); item.suggestedStores.add(storeId);
   };
   Object.entries(week.meals).sort(([a], [b]) => a.localeCompare(b)).forEach(([slot, meal]) => {
+    if (meal.kind === 'leftovers') return;
     const recipe = state.recipes.find(r => r.id === meal.recipeId);
     if (!recipe || !validServings(recipe.originalServings) || !validServings(meal.servings)) return;
     const [day, type] = slot.split('-');
-    recipe.ingredients.forEach((i, n) => add(i, Number(meal.servings) / Number(recipe.originalServings), `${DAYS[Number(day)]} ${type} · ${recipe.title}`, `${slot}-${i.id}-${n}`));
+    const total = cookingServings(state, key, slot), extra = total - Number(meal.servings);
+    recipe.ingredients.forEach((i, n) => add(i, total / Number(recipe.originalServings), `${DAYS[Number(day)]} ${type} · ${recipe.title}${extra ? ` (includes ${formatNumber(extra)} leftover lunch servings)` : ''}`, `${slot}-${i.id}-${n}`));
   });
   week.extras.forEach(i => add(i, 1, 'Extra grocery item', i.id));
   return [...groups.values()].map(item => {

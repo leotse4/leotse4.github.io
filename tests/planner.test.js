@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { addDays, copyWeek, emptyWeek, groceryList, groceryText, ingredientKey, mondayOf, newPlanner, planMeal, removeStore, restorePlanner, validatePlanner } from '../src/lib/planner.js';
+import { addDays, cookingServings, copyWeek, emptyWeek, groceryList, groceryText, ingredientKey, leftoverChoices, mealRecipe, mondayOf, newPlanner, planLeftovers, planMeal, removeMeal, removeStore, restorePlanner, validatePlanner } from '../src/lib/planner.js';
 import { parseIngredient } from '../src/lib/recipe.js';
 
 const key = '2026-11-16';
@@ -114,4 +114,81 @@ test('restores complete multiweek state, rejects invalid backups', () => {
   assert.equal(validatePlanner(state), false);
   const malformed = fixture(); malformed.recipes[0].category = { unexpected: true };
   assert.equal(validatePlanner(malformed), false);
+});
+
+test('leftover lunch adds extra portions to dinner and groceries only once', () => {
+  let state = planMeal(fixture(), key, '0-dinner', 'a', 2);
+  state = planLeftovers(state, key, '1-lunch', key, '0-dinner', 2);
+  assert.equal(cookingServings(state, key, '0-dinner'), 4);
+  const pasta = groceryList(state, key).find(i => i.name === 'pasta');
+  assert.equal(pasta.amount, '400'); assert.equal(pasta.sources.length, 1);
+  assert.match(pasta.sources[0], /includes 2 leftover lunch servings/);
+  assert.equal(mealRecipe(state, key, '1-lunch').id, 'a');
+  assert.equal(validatePlanner(restorePlanner(JSON.stringify(state))), true);
+});
+test('changes and removing a leftover reservation rescale original dinner amounts', () => {
+  let state = planMeal(fixture(), key, '0-dinner', 'a', 2);
+  state = planLeftovers(state, key, '1-lunch', key, '0-dinner', 3);
+  assert.equal(groceryList(state, key).find(i => i.name === 'pasta').amount, '500');
+  state = planLeftovers(state, key, '1-lunch', key, '0-dinner', 1);
+  assert.equal(groceryList(state, key).find(i => i.name === 'pasta').amount, '300');
+  state = removeMeal(state, key, '1-lunch');
+  assert.equal(groceryList(state, key).find(i => i.name === 'pasta').amount, '200');
+});
+test('quick lunches are independent recipes and multiple leftovers reserve enough portions', () => {
+  let state = planMeal(fixture(), key, '0-dinner', 'a', 2);
+  state = planLeftovers(state, key, '1-lunch', key, '0-dinner', 2);
+  state = planLeftovers(state, key, '2-lunch', key, '0-dinner', 1);
+  state = planMeal(state, key, '3-lunch', 'a', 2);
+  assert.equal(cookingServings(state, key, '0-dinner'), 5);
+  assert.equal(groceryList(state, key).find(i => i.name === 'pasta').amount, '700');
+});
+test('cross-week leftovers count groceries in the source dinner week', () => {
+  let state = planMeal(fixture(), key, '6-dinner', 'a', 2);
+  const next = addDays(key, 7);
+  state = planLeftovers(state, next, '0-lunch', key, '6-dinner', 2);
+  assert.equal(groceryList(state, next).length, 0);
+  assert.equal(groceryList(state, key).find(i => i.name === 'pasta').amount, '400');
+  assert.equal(leftoverChoices(state, next, '0-lunch')[0].sourceSlot, '6-dinner');
+  assert.equal(validatePlanner(state), true);
+});
+test('rejects future, same-day, missing, and non-dinner leftover sources', () => {
+  const state = planMeal(fixture(), key, '1-dinner', 'a', 2);
+  assert.throws(() => planLeftovers(state, key, '0-lunch', key, '1-dinner', 2));
+  assert.throws(() => planLeftovers(state, key, '1-lunch', key, '1-dinner', 2));
+  assert.throws(() => planLeftovers(state, key, '2-lunch', key, '0-dinner', 2));
+  assert.throws(() => planLeftovers(state, key, '2-dinner', key, '1-dinner', 2));
+  assert.throws(() => planLeftovers(state, key, '2-lunch', key, '1-dinner', 0));
+});
+test('removing a dinner removes its linked lunches across weeks', () => {
+  let state = planMeal(fixture(), key, '6-dinner', 'a', 2);
+  state = planLeftovers(state, addDays(key, 7), '0-lunch', key, '6-dinner', 2);
+  state = removeMeal(state, key, '6-dinner');
+  assert.deepEqual(state.weeks[addDays(key, 7)].meals, {});
+  assert.equal(validatePlanner(state), true);
+});
+test('copying a week shifts leftover links and preserves original week references', () => {
+  let state = planMeal(fixture(), key, '0-dinner', 'a', 2);
+  state = planLeftovers(state, key, '1-lunch', key, '0-dinner', 2);
+  const next = addDays(key, 7); state = copyWeek(state, key, next);
+  assert.equal(state.weeks[next].meals['1-lunch'].sourceWeek, next);
+  assert.equal(state.weeks[key].meals['1-lunch'].sourceWeek, key);
+  assert.equal(groceryList(state, key).find(i => i.name === 'pasta').amount, '400');
+  assert.equal(groceryList(state, next).find(i => i.name === 'pasta').amount, '400');
+  assert.equal(validatePlanner(state), true);
+});
+
+test('swapping a dinner updates the linked lunch recipe; replacing leftovers with a quick lunch releases the reservation', () => {
+  let state = fixture();
+  state.recipes.push({ ...state.recipes[0], id: 'b', title: 'Quick bowl', ingredients: [{ ...parseIngredient('200 g rice'), id: 'rice', storeId: 'ranch99' }] });
+  state = planMeal(state, key, '0-dinner', 'a', 2);
+  state = planLeftovers(state, key, '1-lunch', key, '0-dinner', 2);
+  state = planMeal(state, key, '0-dinner', 'b', 2);
+  assert.equal(mealRecipe(state, key, '1-lunch').title, 'Quick bowl');
+  assert.equal(groceryList(state, key).find(i => i.name === 'rice').amount, '200');
+  assert.equal(groceryList(state, key).some(i => i.name === 'pasta'), false);
+  state = planMeal(state, key, '1-lunch', 'a', 2);
+  assert.equal(cookingServings(state, key, '0-dinner'), 2);
+  assert.equal(groceryList(state, key).find(i => i.name === 'rice').amount, '100');
+  assert.equal(groceryList(state, key).find(i => i.name === 'pasta').amount, '200');
 });
