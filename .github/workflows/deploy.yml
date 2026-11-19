@@ -33,7 +33,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
 
       - name: Install dependencies
@@ -41,6 +41,11 @@ jobs:
 
       - name: Build project
         run: npm run build
+        env:
+          VITE_RECIPE_IMPORT_URL: ${{ vars.VITE_RECIPE_IMPORT_URL }}
+
+      - name: Verify recipe release
+        run: npm test
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
@@ -54,3 +59,4 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+

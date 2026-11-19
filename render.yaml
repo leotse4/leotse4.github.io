@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: leo-recipe-importer
+    runtime: node
+    plan: free
+    buildCommand: echo "No backend dependencies required"
+    startCommand: node server/index.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: ALLOWED_ORIGINS
+        value: https://leotse4.github.io

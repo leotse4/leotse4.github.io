@@ -10,7 +10,8 @@ const Navbar = () => {
     { path: '/', label: 'Home' },
     { path: '/about', label: 'Story' },
     { path: '/career', label: 'Career' },
-    { path: '/interests', label: 'Interests' }
+    { path: '/interests', label: 'Interests' },
+    { path: '/recipes', label: 'Recipe tool' }
   ];
 
   // Close mobile menu on route change
@@ -150,3 +151,4 @@ const Navbar = () => {
 };
 
 export default Navbar;
+
